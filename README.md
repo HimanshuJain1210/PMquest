@@ -19,7 +19,7 @@ PM Quest uses Groq across four routes, each with strong prompting (few-shot cali
 | Route | What it does | Technique |
 |---|---|---|
 | `/api/grade` | Grades free-text recall answers | Rubric (coverage/accuracy/clarity) + few-shot + internal CoT + per-dimension JSON |
-| `/api/generate` | **Forge** — turns pasted notes into fresh questions you play instantly | Few-shot seeded from the hand-written bank; **grounded** to the source; validated + sanitised |
+| `/api/generate` | **Smart Questions** — two-pass: generates deep, scenario-based questions from real PM/AI-PM knowledge (your notes are flavour, not a ceiling), then a **verifier pass rejects any question with a wrong answer key, weak distractors, or trivia**. Cached per unit for instant free replay. | Domain-brief seeding + generate→verify + structural sanitise |
 | `/api/insights` | **AI study coach** (Me tab) — reads accuracy/time/miss-patterns, says what to fix | LLM-as-analyst over aggregated stats; structured insights |
 | `/api/review` | **Adaptive review** (Forge tab) — orders revision by miss-count + recency | Spaced-repetition planner |
 | `/api/case` | **Case Mode** — a multi-step scenario per unit; AI mentor reacts to each decision you make | Per-step reasoning eval, tied to PM principles |

@@ -11,12 +11,14 @@ import ActionTask from "@/components/ActionTask";
 import AuthScreen from "@/components/AuthScreen";
 import { CURRICULUM } from "@/data/questions";
 import { CASES, ACTIONS } from "@/data/cases";
+import { TOPIC_BRIEFS } from "@/data/topicBriefs";
 import { getSupabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { initAnalytics, track, identify } from "@/lib/analytics";
 import {
   loadLocal, saveLocal, regenHearts, msUntilNextHeart,
   rolloverDaily, applyStreak,
   fetchRemoteState, pushProfile, pushProgress, logAttempt,
+  appendGenQuestions, getGenQuestions,
 } from "@/lib/store";
 
 export default function LearnPage() {
@@ -26,6 +28,7 @@ export default function LearnPage() {
   const [active, setActive] = useState(null); // {unit, lesson} when in a lesson
   const [activeCase, setActiveCase] = useState(null); // unit when in case mode
   const [activeAction, setActiveAction] = useState(null); // unit when in action task
+  const [smartLoading, setSmartLoading] = useState(null); // unit while generating smart Qs
   const [auth, setAuth] = useState(null); // {reason} when showing auth
   const [toast, setToast] = useState(null);
   const [ready, setReady] = useState(false);
@@ -161,6 +164,41 @@ export default function LearnPage() {
     setActiveAction(null);
   }
 
+  // ── Smart (AI-generated) questions per unit ───────────────
+  async function startSmart(unit) {
+    track("smart_started", { unit: unit.id });
+    setSmartLoading(unit);
+    let questions = [];
+    try {
+      const brief = TOPIC_BRIEFS[unit.id];
+      const r = await fetch("/api/generate", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brief, count: 5 }),
+      });
+      const j = await r.json();
+      if (j.questions?.length) {
+        questions = j.questions;
+        appendGenQuestions(unit.id, questions);
+      } else {
+        questions = getGenQuestions(unit.id).slice(0, 5);
+      }
+    } catch {
+      questions = getGenQuestions(unit.id).slice(0, 5);
+    }
+    setSmartLoading(null);
+
+    if (!questions.length) {
+      showToast("Smart questions need the AI key set in Vercel.");
+      return;
+    }
+    track("smart_ready", { unit: unit.id, n: questions.length });
+    setActive({
+      unit: { id: `smart-${unit.id}`, title: `${unit.title} · Smart`, color: unit.color, icon: "spark" },
+      lesson: { id: `smart_${Date.now()}`, title: "Smart questions", q: questions },
+      startHearts: 5, ephemeral: true,
+    });
+  }
+
   // ── per-question answer (timing + analytics + miss tally) ──
   function onAnswer(payload) {
     track("question_answered", payload);
@@ -269,7 +307,7 @@ export default function LearnPage() {
       </header>
 
       {tab === "learn" && (
-        <SkillTree state={state} user={user} onStart={startLesson} onLockedUnit={onLockedUnit} onStartCase={startCase} onStartAction={startAction} />
+        <SkillTree state={state} user={user} onStart={startLesson} onLockedUnit={onLockedUnit} onStartCase={startCase} onStartAction={startAction} onStartSmart={startSmart} />
       )}
       {tab === "notes" && <Notes user={user} onToast={showToast} />}
       {tab === "forge" && <Forge state={state} onPlay={playForge} />}
@@ -291,6 +329,16 @@ export default function LearnPage() {
       </nav>
 
       {toast && <div className="toast">{toast}</div>}
+
+      {smartLoading && (
+        <div className="smart-overlay">
+          <div className="smart-card">
+            <div className="spark-spin"><Icon name="spark" style={{ width: 36, height: 36, color: "var(--coral)" }} /></div>
+            <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 18, marginTop: 12 }}>Writing smart questions…</div>
+            <div style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 4 }}>AI is drafting fresh {smartLoading.title} questions and fact-checking each one.</div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

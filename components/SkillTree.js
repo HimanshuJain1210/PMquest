@@ -7,7 +7,7 @@ import { CASES, ACTIONS } from "@/data/cases";
 const OFFSETS = ["", "cr", "r", "cr", "", "cl", "l", "cl"];
 export const FREE_UNITS = 3; // first 3 chapters free
 
-export default function SkillTree({ state, user, onStart, onLockedUnit, onStartCase, onStartAction }) {
+export default function SkillTree({ state, user, onStart, onLockedUnit, onStartCase, onStartAction, onStartSmart }) {
   const completed = state.completed || {};
 
   function unitDoneCount(u) {
@@ -97,6 +97,18 @@ export default function SkillTree({ state, user, onStart, onLockedUnit, onStartC
                         </button>
                       </div>
                     )}
+                    {/* Smart (AI-generated) questions — unlimited, deeper than the notes */}
+                    <div className="node-row" data-off="cr">
+                      <button
+                        className={`node ${allDone ? "" : "locked"}`}
+                        style={allDone ? { borderColor: "var(--coral)", boxShadow: "0 6px 0 var(--coral-dk)", background: "#fff1ec" } : {}}
+                        onClick={() => allDone && onStartSmart(u)}
+                        aria-label="Smart AI questions"
+                      >
+                        <Icon name="spark" style={{ width: 28, height: 28, color: allDone ? "var(--coral)" : "var(--muted-2)" }} />
+                        <span className="node-label">⚡ Smart questions (AI)</span>
+                      </button>
+                    </div>
                   </>
                 );
               })()}
