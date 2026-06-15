@@ -2,11 +2,12 @@
 import { Icon } from "./Icon";
 import Mascot from "./Mascot";
 import { CURRICULUM } from "@/data/questions";
+import { CASES, ACTIONS } from "@/data/cases";
 
 const OFFSETS = ["", "cr", "r", "cr", "", "cl", "l", "cl"];
 export const FREE_UNITS = 3; // first 3 chapters free
 
-export default function SkillTree({ state, user, onStart, onLockedUnit }) {
+export default function SkillTree({ state, user, onStart, onLockedUnit, onStartCase, onStartAction }) {
   const completed = state.completed || {};
 
   function unitDoneCount(u) {
@@ -62,6 +63,43 @@ export default function SkillTree({ state, user, onStart, onLockedUnit }) {
                   </div>
                 );
               })}
+
+              {/* End-of-unit Case + Action nodes (unlock once all lessons done) */}
+              {(() => {
+                const allDone = u.lessons.every((l) => completed[`${u.id}:${l.id}`]);
+                const caseDone = !!completed[`${u.id}:__case`];
+                if (locked) return null;
+                return (
+                  <>
+                    {CASES[u.id] && (
+                      <div className="node-row" data-off="cr">
+                        <button
+                          className={`node ${caseDone ? "done" : ""} ${allDone ? "" : "locked"}`}
+                          style={caseDone ? { background: "#6C5CE7", borderColor: "#6C5CE7", boxShadow: "0 6px 0 #4a3db0" } : allDone ? { borderColor: "#6C5CE7", boxShadow: "0 6px 0 #d9d0ff" } : {}}
+                          onClick={() => allDone && onStartCase(u)}
+                          aria-label="Case study"
+                        >
+                          {caseDone ? <span className="check">✓</span> : <Icon name="brain" style={{ width: 28, height: 28, color: allDone ? "#6C5CE7" : "var(--muted-2)" }} />}
+                          <span className="node-label">📂 Case: {CASES[u.id].title}</span>
+                        </button>
+                      </div>
+                    )}
+                    {ACTIONS[u.id] && (
+                      <div className="node-row" data-off="cl">
+                        <button
+                          className={`node ${completed[`${u.id}:__action`] ? "done" : ""} ${allDone ? "" : "locked"}`}
+                          style={completed[`${u.id}:__action`] ? { background: "#ffb703", borderColor: "#ffb703", boxShadow: "0 6px 0 #c98f00" } : allDone ? { borderColor: "#ffb703", boxShadow: "0 6px 0 #ffe2b8" } : {}}
+                          onClick={() => allDone && onStartAction(u)}
+                          aria-label="Action task"
+                        >
+                          {completed[`${u.id}:__action`] ? <span className="check">✓</span> : <Icon name="pencil" style={{ width: 26, height: 26, color: allDone ? "#9a6a00" : "var(--muted-2)" }} />}
+                          <span className="node-label">✍️ Apply: {ACTIONS[u.id].title}</span>
+                        </button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         );

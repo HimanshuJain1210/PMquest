@@ -6,8 +6,11 @@ import Lesson from "@/components/Lesson";
 import Notes from "@/components/Notes";
 import Profile from "@/components/Profile";
 import Forge from "@/components/Forge";
+import CaseMode from "@/components/CaseMode";
+import ActionTask from "@/components/ActionTask";
 import AuthScreen from "@/components/AuthScreen";
 import { CURRICULUM } from "@/data/questions";
+import { CASES, ACTIONS } from "@/data/cases";
 import { getSupabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { initAnalytics, track, identify } from "@/lib/analytics";
 import {
@@ -21,6 +24,8 @@ export default function LearnPage() {
   const [state, setState] = useState(() => loadLocal());
   const [user, setUser] = useState(null);
   const [active, setActive] = useState(null); // {unit, lesson} when in a lesson
+  const [activeCase, setActiveCase] = useState(null); // unit when in case mode
+  const [activeAction, setActiveAction] = useState(null); // unit when in action task
   const [auth, setAuth] = useState(null); // {reason} when showing auth
   const [toast, setToast] = useState(null);
   const [ready, setReady] = useState(false);
@@ -120,6 +125,42 @@ export default function LearnPage() {
     setAuth({ reason: "Unlock all chapters" });
   }
 
+  // ── Case Mode ─────────────────────────────────────────────
+  function startCase(unit) {
+    track("case_started", { unit: unit.id });
+    setActiveCase(unit);
+  }
+  function completeCase(res) {
+    track("case_completed", { unit: res.unit, avg: res.avg });
+    setState((s) => {
+      const xpGain = 20 + Math.round((res.avg / 100) * 20);
+      let ns = rolloverDaily(applyStreak({ ...s }));
+      ns.xp = (ns.xp || 0) + xpGain;
+      ns.todayXP = (ns.todayXP || 0) + xpGain;
+      ns.completed = { ...ns.completed, [`${res.unit}:__case`]: { bestAccuracy: res.avg, lastDoneAt: new Date().toISOString(), durationMs: res.totalMs } };
+      return ns;
+    });
+    setActiveCase(null);
+  }
+
+  // ── Action Task ───────────────────────────────────────────
+  function startAction(unit) {
+    track("action_started", { unit: unit.id });
+    setActiveAction(unit);
+  }
+  function completeAction(res) {
+    track("action_completed", { unit: res.unit, score: res.score });
+    setState((s) => {
+      const xpGain = 15;
+      let ns = rolloverDaily(applyStreak({ ...s }));
+      ns.xp = (ns.xp || 0) + xpGain;
+      ns.todayXP = (ns.todayXP || 0) + xpGain;
+      ns.completed = { ...ns.completed, [`${res.unit}:__action`]: { bestAccuracy: res.score, lastDoneAt: new Date().toISOString(), durationMs: 0 } };
+      return ns;
+    });
+    setActiveAction(null);
+  }
+
   // ── per-question answer (timing + analytics + miss tally) ──
   function onAnswer(payload) {
     track("question_answered", payload);
@@ -198,6 +239,13 @@ export default function LearnPage() {
     return <AuthScreen reason={auth.reason} onClose={supabaseConfigured() ? () => setAuth(null) : () => setAuth(null)} />;
   }
 
+  if (activeCase) {
+    return <CaseMode unit={activeCase} caseData={CASES[activeCase.id]} onExit={() => setActiveCase(null)} onComplete={completeCase} />;
+  }
+  if (activeAction) {
+    return <ActionTask unit={activeAction} action={ACTIONS[activeAction.id]} onExit={() => setActiveAction(null)} onComplete={completeAction} />;
+  }
+
   if (active) {
     return (
       <Lesson
@@ -221,7 +269,7 @@ export default function LearnPage() {
       </header>
 
       {tab === "learn" && (
-        <SkillTree state={state} user={user} onStart={startLesson} onLockedUnit={onLockedUnit} />
+        <SkillTree state={state} user={user} onStart={startLesson} onLockedUnit={onLockedUnit} onStartCase={startCase} onStartAction={startAction} />
       )}
       {tab === "notes" && <Notes user={user} onToast={showToast} />}
       {tab === "forge" && <Forge state={state} onPlay={playForge} />}

@@ -22,6 +22,16 @@ PM Quest uses Groq across four routes, each with strong prompting (few-shot cali
 | `/api/generate` | **Forge** — turns pasted notes into fresh questions you play instantly | Few-shot seeded from the hand-written bank; **grounded** to the source; validated + sanitised |
 | `/api/insights` | **AI study coach** (Me tab) — reads accuracy/time/miss-patterns, says what to fix | LLM-as-analyst over aggregated stats; structured insights |
 | `/api/review` | **Adaptive review** (Forge tab) — orders revision by miss-count + recency | Spaced-repetition planner |
+| `/api/case` | **Case Mode** — a multi-step scenario per unit; AI mentor reacts to each decision you make | Per-step reasoning eval, tied to PM principles |
+| `/api/critique` | **Action Task** — you write real PM work (problem statement, JTBD, OKR); AI critiques it like a doc review | Strengths + improvements + an upgraded example line |
+
+### Learning modes (how it actually teaches, not just quizzes)
+- **Lessons** — scenario MCQs/recall with instant feedback. On a wrong answer you must engage with *why* before continuing.
+- **Case Mode** (🧠 node at the end of each unit) — a realistic situation unfolds over 3 decisions; you type what you'd do, the AI mentor grades your reasoning and shows what a strong PM does.
+- **Action Task** (✍️ node) — you produce real work for a product you choose; the AI reviews it against the principle the unit taught and rewrites one line as an example.
+- **Forge** — generate quizzes from your own notes, or let AI plan adaptive review.
+
+This shifts the app from *recognition* (tap the right option) toward *generation* (make the call, do the work) — the skills that actually matter for an AI PM.
 
 The browser only calls these own-routes, never Groq directly — the secret key stays on the server.
 

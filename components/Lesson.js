@@ -35,6 +35,7 @@ export default function Lesson({ unit, lesson, startHearts, onExit, onComplete, 
   const qStartRef = useRef(Date.now());
   const [lastCorrect, setLastCorrect] = useState(false);
   const [done, setDone] = useState(false);
+  const [reflected, setReflected] = useState(false);
 
   const q = questions[idx];
 
@@ -58,7 +59,7 @@ export default function Lesson({ unit, lesson, startHearts, onExit, onComplete, 
   useEffect(() => {
     // reset per-question
     setSel(null); setText(""); setMatchSel(null); setMatches({}); setMatchBad(null);
-    setGraderMsg(null); setGrading(false);
+    setGraderMsg(null); setGrading(false); setReflected(false);
     if (q.type === "order") {
       let shuf = shuffled(q.seq).map((s) => s[0]);
       // avoid starting already-correct (only matters for short lists)
@@ -350,11 +351,23 @@ export default function Lesson({ unit, lesson, startHearts, onExit, onComplete, 
               {lastCorrect ? "Nice — that's right!" : (hearts === 0 ? "Out of hearts" : "Not quite")}
             </div>
             <div className="why">{q.why}</div>
-            <div className="row">
-              <button className={`btn ${lastCorrect ? "teal" : ""}`} style={{ flex: 1, padding: 14 }} onClick={continueNext}>
-                {hearts === 0 && !lastCorrect ? "See results" : (idx + 1 >= questions.length ? "Finish" : "Continue")}
+            {/* Wrong-answer engagement: make the learner confront the misconception before moving on */}
+            {!lastCorrect && (q.type === "mcq" || q.type === "trap") && !reflected ? (
+              <button className="btn ink" style={{ width: "100%", padding: 13 }} onClick={() => setReflected(true)}>
+                I see why — show me the takeaway
               </button>
-            </div>
+            ) : (
+              <div className="row">
+                <button className={`btn ${lastCorrect ? "teal" : ""}`} style={{ flex: 1, padding: 14 }} onClick={continueNext}>
+                  {hearts === 0 && !lastCorrect ? "See results" : (idx + 1 >= questions.length ? "Finish" : "Continue")}
+                </button>
+              </div>
+            )}
+            {!lastCorrect && reflected && (q.type === "mcq" || q.type === "trap") && (
+              <div style={{ fontSize: 13.5, color: "var(--ink)", marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(0,0,0,.08)" }}>
+                <b>Remember:</b> the tempting wrong answers here are the exact mistakes real PMs make under pressure. Spotting them is the skill.
+              </div>
+            )}
           </div>
         </div>
       )}

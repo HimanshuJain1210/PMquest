@@ -217,6 +217,15 @@ export const CURRICULUM = [
           { type:"mcq", q:"You need a fast, cheap, on-device classifier for one narrow task. Pick:", options:["The biggest frontier model","A fine-tuned small model (SLM)","Whatever's newest","GPT-4 for everything"], answer:1, why:"Superman vs the specialist doctor — most tasks want a specialist, not general superpowers." },
         ],
       },
+      {
+        id: "r3", title: "Chunking & Retrieval Quality",
+        q: [
+          { type:"mcq", q:"Your RAG bot retrieves the right document but answers with half the policy missing. Likely cause?", options:["The model is too small","Chunking split the policy mid-thought, so a key chunk wasn't retrieved","Temperature too high","Not enough GPUs"], answer:1, why:"Chunk strategy decides what can be retrieved. Bad splits orphan critical context. Tune chunk size/overlap to the content." },
+          { type:"trap", q:"To be safe, you set Top-K retrieval to 50 chunks per query. Good idea?", options:["Yes — more context, safer","No — too many chunks add noise, cost and 'lost in the middle'; retrieve few, relevant ones"], answer:1, why:"Retrieval quality > quantity. Stuffing K dilutes the signal and raises hallucination." },
+          { type:"recall", q:"A user complains your RAG bot 'makes things up' for a question you KNOW is in the docs. Walk the first 3 things you'd check.", answer:"1) Did retrieval return the right chunk (retrieval log)? 2) Was the chunk well-formed (chunking/embedding)? 3) Did the prompt actually include it (augmentation)? Only then suspect the model.", why:"Debug the pipeline in order — generation is the last suspect, not the first." },
+          { type:"mcq", q:"Two chunks contradict each other (old vs new policy both retrieved). Best fix?", options:["Let the model pick","Add metadata (date) + filter/rank by recency so stale chunks lose","Remove RAG","Bigger model"], answer:1, why:"Metadata filtering and re-ranking resolve conflicts retrieval alone can't." },
+        ],
+      },
     ],
   },
 
