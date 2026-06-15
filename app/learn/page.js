@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Icon } from "@/components/Icon";
 import SkillTree, { FREE_UNITS } from "@/components/SkillTree";
 import Lesson from "@/components/Lesson";
@@ -24,6 +24,18 @@ export default function LearnPage() {
   const [auth, setAuth] = useState(null); // {reason} when showing auth
   const [toast, setToast] = useState(null);
   const [ready, setReady] = useState(false);
+  const [bumpXP, setBumpXP] = useState(false);
+  const [bumpStreak, setBumpStreak] = useState(false);
+  const prevXP = useRef(0);
+  const prevStreak = useRef(0);
+
+  // pulse HUD stats when they grow
+  useEffect(() => {
+    if (state.xp > prevXP.current) { setBumpXP(true); setTimeout(() => setBumpXP(false), 420); }
+    prevXP.current = state.xp;
+    if (state.streak > prevStreak.current) { setBumpStreak(true); setTimeout(() => setBumpStreak(false), 420); }
+    prevStreak.current = state.streak;
+  }, [state.xp, state.streak]);
 
   // ── init analytics + session ──────────────────────────────
   useEffect(() => {
@@ -203,8 +215,8 @@ export default function LearnPage() {
     <>
       <header className="hud">
         <div className="brand"><span className="logo">◆</span> PM Quest</div>
-        <div className="stat streak"><Icon name="flame" /> {state.streak || 0}</div>
-        <div className="stat xp"><Icon name="bolt" /> {state.xp || 0}</div>
+        <div className={`stat streak ${bumpStreak ? "bump" : ""}`}><Icon name="flame" /> {state.streak || 0}</div>
+        <div className={`stat xp ${bumpXP ? "bump" : ""}`}><Icon name="bolt" /> {state.xp || 0}</div>
         <div className="stat hearts"><Icon name="heart" /> {regenHearts(state).hearts}</div>
       </header>
 

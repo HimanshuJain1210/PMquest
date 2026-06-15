@@ -1,5 +1,6 @@
 "use client";
 import { Icon } from "./Icon";
+import Mascot from "./Mascot";
 import { CURRICULUM } from "@/data/questions";
 
 const OFFSETS = ["", "cr", "r", "cr", "", "cl", "l", "cl"];
@@ -76,7 +77,8 @@ function Hero({ state }) {
   const goal = state.dailyGoalXP || 30;
   const pct = Math.min(100, Math.round(((state.todayXP || 0) / goal) * 100));
   return (
-    <div className="card" style={{ marginBottom: 6, display: "flex", alignItems: "center", gap: 16 }}>
+    <div className="card" style={{ marginBottom: 6, display: "flex", alignItems: "center", gap: 14 }}>
+      <Mascot mood="idle" size={64} />
       <div style={{ flex: 1 }}>
         <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 18 }}>Daily goal</div>
         <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>{state.todayXP || 0} / {goal} XP today</div>

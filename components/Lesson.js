@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Icon } from "./Icon";
+import Mascot from "./Mascot";
 
 const KEYS = ["A", "B", "C", "D", "E"];
 
@@ -343,15 +344,17 @@ export default function Lesson({ unit, lesson, startHearts, onExit, onComplete, 
       {/* feedback footer */}
       {phase === "feedback" && (
         <div className={`feedback ${lastCorrect ? "good" : "bad"}`}>
-          <div className="ftitle">
-            <Icon name={lastCorrect ? "check" : "bolt"} style={{ width: 22, height: 22 }} />
-            {lastCorrect ? "Nice — that's right" : (hearts === 0 ? "Out of hearts" : "Not quite")}
-          </div>
-          <div className="why">{q.why}</div>
-          <div className="row">
-            <button className={`btn ${lastCorrect ? "teal" : ""}`} style={{ flex: 1, padding: 14 }} onClick={continueNext}>
-              {hearts === 0 && !lastCorrect ? "See results" : (idx + 1 >= questions.length ? "Finish" : "Continue")}
-            </button>
+          <Mascot mood={lastCorrect ? "happy" : "sad"} size={64} />
+          <div className="fbody">
+            <div className="ftitle">
+              {lastCorrect ? "Nice — that's right!" : (hearts === 0 ? "Out of hearts" : "Not quite")}
+            </div>
+            <div className="why">{q.why}</div>
+            <div className="row">
+              <button className={`btn ${lastCorrect ? "teal" : ""}`} style={{ flex: 1, padding: 14 }} onClick={continueNext}>
+                {hearts === 0 && !lastCorrect ? "See results" : (idx + 1 >= questions.length ? "Finish" : "Continue")}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -364,18 +367,48 @@ function Result({ done, onExit }) {
   const secs = Math.round(totalMs / 1000);
   const mm = Math.floor(secs / 60), ss = secs % 60;
   const xp = passed ? 10 + correct * 4 : correct * 2;
+  const [shownXP, setShownXP] = useState(0);
+
+  // count-up XP
+  useEffect(() => {
+    let raf; const start = performance.now(); const dur = 700;
+    const tick = (t) => {
+      const p = Math.min(1, (t - start) / dur);
+      setShownXP(Math.round(p * xp));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [xp]);
+
+  const confettiColors = ["#ff5a3c", "#ffb703", "#18a999", "#6C5CE7", "#0984E3"];
+
   return (
     <div className="result">
-      <div style={{ fontSize: 54 }}>{passed ? "🏆" : "💪"}</div>
+      {passed && (
+        <div className="confetti" aria-hidden>
+          {Array.from({ length: 40 }).map((_, i) => (
+            <i key={i} style={{
+              left: `${Math.random() * 100}%`,
+              background: confettiColors[i % confettiColors.length],
+              animationDuration: `${1.6 + Math.random() * 1.6}s`,
+              animationDelay: `${Math.random() * 0.5}s`,
+            }} />
+          ))}
+        </div>
+      )}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
+        <Mascot mood={passed ? "celebrate" : "think"} size={110} />
+      </div>
       <div className="big">{passed ? "Lesson complete!" : "Good effort — try again"}</div>
       <div className="grid3">
-        <div className="tile"><div className="n" style={{ color: "var(--gold)" }}>+{xp}</div><div className="l">XP</div></div>
+        <div className="tile"><div className="n countup" style={{ color: "var(--gold)" }}>+{shownXP}</div><div className="l">XP</div></div>
         <div className="tile"><div className="n" style={{ color: "var(--teal-dk)" }}>{accuracy}%</div><div className="l">Accuracy</div></div>
         <div className="tile"><div className="n">{mm}:{String(ss).padStart(2, "0")}</div><div className="l">Time</div></div>
       </div>
       <p style={{ color: "var(--muted)", fontSize: 14 }}>{correct} of {total} correct</p>
       <button className="btn" style={{ width: "100%", padding: 14, marginTop: 10 }} onClick={onExit}>
-        {passed ? "Back to path" : "Back to path"}
+        Back to path
       </button>
     </div>
   );
