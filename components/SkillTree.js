@@ -67,6 +67,7 @@ export default function SkillTree({ state, user, onStart, onLockedUnit, onStartC
               {/* End-of-unit Case + Action nodes (unlock once all lessons done) */}
               {(() => {
                 const allDone = u.lessons.every((l) => completed[`${u.id}:${l.id}`]);
+                const someDone = u.lessons.some((l) => completed[`${u.id}:${l.id}`]);
                 const caseDone = !!completed[`${u.id}:__case`];
                 if (locked) return null;
                 return (
@@ -74,12 +75,12 @@ export default function SkillTree({ state, user, onStart, onLockedUnit, onStartC
                     {CASES[u.id] && (
                       <div className="node-row" data-off="cr">
                         <button
-                          className={`node ${caseDone ? "done" : ""} ${allDone ? "" : "locked"}`}
-                          style={caseDone ? { background: "#6C5CE7", borderColor: "#6C5CE7", boxShadow: "0 6px 0 #4a3db0" } : allDone ? { borderColor: "#6C5CE7", boxShadow: "0 6px 0 #d9d0ff" } : {}}
-                          onClick={() => allDone && onStartCase(u)}
+                          className={`node ${caseDone ? "done" : ""} ${someDone ? "" : "locked"}`}
+                          style={caseDone ? { background: "#6C5CE7", borderColor: "#6C5CE7", boxShadow: "0 6px 0 #4a3db0" } : someDone ? { borderColor: "#6C5CE7", boxShadow: "0 6px 0 #d9d0ff" } : {}}
+                          onClick={() => someDone && onStartCase(u)}
                           aria-label="Case study"
                         >
-                          {caseDone ? <span className="check">✓</span> : <Icon name="brain" style={{ width: 28, height: 28, color: allDone ? "#6C5CE7" : "var(--muted-2)" }} />}
+                          {caseDone ? <span className="check">✓</span> : <Icon name="brain" style={{ width: 28, height: 28, color: someDone ? "#6C5CE7" : "var(--muted-2)" }} />}
                           <span className="node-label">📂 Case: {CASES[u.id].title}</span>
                         </button>
                       </div>
